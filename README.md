@@ -1,12 +1,16 @@
-# Perforce Discord Webhook
-This is a script that posts a message to Discord every time a new changelist is submitted from the Perforce version control system.
+# Perforce Send Webhooks
+These are scripts that post a message to Discord or Slack every time a new changelist is submitted to the Perforce Helix Core server.
 
+### Discord  
 ![image](https://user-images.githubusercontent.com/23201434/79544589-a1a1a900-8065-11ea-8795-1c95aba5b91a.png)
 
+### Slack  
+![image](images/slack_message.png)
+
 ## Requirements:
-1. This was only tested with p4d running on a linux system (Ubuntu 18.04)
+1. This was only tested with p4d running on a linux system with bash (Ubuntu 20.04, Rocky, CentOS, etc.)
 2. The Perforce user needs access read access to the depot, so it can access the `p4 describe` command (more info below)
-3. You need a [Discord Webhook](https://support.discordapp.com/hc/en-us/articles/228383668-Intro-to-Webhooks) set up
+3. You need a [Discord Webhook](https://support.discordapp.com/hc/en-us/articles/228383668-Intro-to-Webhooks) or [Slack Webhook](https://api.slack.com/messaging/webhooks) set up
 4. You need access to edit the `p4 triggers` on the server
 
 ## Installation:
@@ -34,25 +38,30 @@ To check that, either check the `/etc/perforce/p4dctl.conf` file or the `/etc/pe
 
 ### 2. Setting up the script
 That's the easy part.
-1. Clone the repo, or [download the script](https://raw.githubusercontent.com/saadbruno/perforce-discord-webhook/master/perforce_discord_webhook.sh) and save it somewhere where the perforce user (or whatever user your server is running) has access to.
-2. Make sure the script is executable by running `chmod u+x perforce_discord_webhook.sh`
+1. Clone the repo, or download the relevant `.sh` script directly and save it somewhere where the perforce user (or whatever user your server is running) has access to.
+2. Make sure the script is executable by running `chmod u+x p4_discord_webhook.sh` or `chmod u+x p4_slack_webhook.sh` (depending on which script you are using)
 
-At this point, you should already be able to run the script manually with `./perforce_discord_webhook.sh <changelist number> <discord webhook link>`
+At this point, you should already be able to run the script manually with `./p4_discord_webhook.sh <changelist number> <discord webhook link>` or `./p4_slack_webhook.sh <changelist number> <discord webhook link>`
 
 ### 3. Setting up the trigger
-Perforce has a Triggers system, where you can configure the server to do actions based on triggers. We are gonna create a trigger that runs this script every time a cahngelist is submitted successfully
+Perforce has a Triggers system, where you can configure the server to do actions based on triggers. Here we will create a trigger that calls this script every time a changelist is submitted to any depot.
 
-1. on a terminal run `p4 triggers`. This will open the server triggers editor.
-2. Add a new trigger with these settings:
+1. In the terminal run `p4 triggers`. This will open the server triggers editor.
+2. Add a new trigger with these settings (select either the Discord or Slack version):
 ```
 Triggers:
-	discord change-commit //depot/... "/bin/bash <perforce_discord_webhook.sh location> %changelist% <discord webhook link>
+	discord change-commit //... "/bin/bash <p4_discord_webhook.sh location> %changelist% <discord webhook link>
+```
+```
+Triggers:
+	slack change-commit //... "/bin/bash <p4_slack_webhook.sh location> %changelist% <discord webhook link>
 ```
 And replace the location and the webhook links according to your setup. Example:
 ```
 	discord change-commit //depot/... "/bin/bash /home/perforce/perforce_discord_webhook.sh %changelist% https://discordapp.com/api/webhooks/<id>/<auth>"
 ```
-You can also customize this to trigger only on specific directories by changing the `//depot/...` bit.
+You can also customize this to trigger only on specific directories by changing the `//...` bit to just be a specific depot or even a branch or stream within that depot. For example, `//My_Project/...` will only trigger on submits to the My_Project depot.
+You can add multiple lines to your p4 trigger configuration, too. So you could have submits to different depots or streams go to different webhooks (for different project channels on Slack/Discord, for example).
 
 **Note:** It is really important to keep the tab before the trigger line, otherwise the server will not recognize it.
 
@@ -68,13 +77,10 @@ At this point, everything should be working as intended! Submit a new changelist
 ### Suggestion: user management
 In item 1.2 it was mentioned that it's easier if the user running the `p4 describe` command doesn't have a timeout so you don't need to reauthenticate from time to time.
 
-For security reasons, it is better to set up a user that has only read access to the depot, and can only be used from the localhost. 
-1. On the P4Admin app, create a new group with `unset` session time out
-2. Create a new user and assign it to that group.
-3. On the permissions tab, add the following line:
+To change a user's password timeout, add them to a group with unlimited password timeout.
+1. On the P4Admin app, create a new group called "Unlimited" (or whatever you want)
+2. Assign your perforce user (or whichever user is set on your server) to the group by typing their name in the `User:` field and clicking Add (or you can Browse... to find the username)
+3. Then change the `Duration before login session times out` to **Unlimited**
+4. Click OK. Now when you login with that user, their session will never timeout. (Be careful with this since any users added to this group will only have to login on each machine once and they will stay logged in forever. Only allow this for users where you are ok with that.)
 
-| Access Level | User / Group | Name | Host | Folder / File |
-| --- | --- | --- | --- | --- |
-| read | user | (the username you created) | 127.0.0.1 | //depot/... |
-
-This will mean this new user will have no session timeout, but will only be able to read the depot, and from the localhost.
+![image](images/unlimited_group.png)
