@@ -1,20 +1,20 @@
 #!/bin/bash
 
-# This script sends a changelist from perforce to a Discord webhook
+# This script sends a changelist from to a Discord webhook
 # USAGE:
-# perforce_discord_webhook.sh <changelist number> <discord webhook link>
+# p4_discord_webhook.sh <changelist number> <discord webhook link>
 #
 # This chan be used in conjunction with the p4 triggers, so everytime a new changelist is send, this script is run automatically
 # p4 triggers example config:
 # Triggers:
-#       discord change-commit //depot/... "/bin/bash /home/perforce/perforce_discord_webhook.sh %changelist% https://discordapp.com/api/webhooks/<id>/<auth>"
+#       discord change-commit //... "/bin/bash /home/perforce/p4_discord_webhook.sh %changelist% https://discordapp.com/api/webhooks/<id>/<auth>"
 #
 # Note that for the p4 triggers command to work, the linux user running the p4d needs to have access to the script, and the p4 user running "p4 describe" needs read access to the depot.
 
 # Uncomment this to enable debugging
 exec &> $(dirname "$0")/output.log
 
-printf ":: Running perforce_discord_webhook.sh\n\n"
+printf ":: Running p4_discord_webhook.sh\n\n"
 
 OUTPUT=$(p4 describe -s $1)
 # echoes the output
