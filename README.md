@@ -1,5 +1,6 @@
 # Perforce Send Webhooks
 These are scripts that post a message to Discord or Slack every time a new changelist is submitted to the Perforce Helix Core server.
+This was forked from [Saadbruno's Perforce Discord Webhook](https://github.com/saadbruno/perforce-discord-webhook) to add a slack option as well.
 
 ### Discord  
 ![image](https://user-images.githubusercontent.com/23201434/79544589-a1a1a900-8065-11ea-8795-1c95aba5b91a.png)
